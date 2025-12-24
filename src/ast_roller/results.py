@@ -5,6 +5,8 @@ Result node classes for the dice rolling evaluation system.
 from abc import ABC, abstractmethod
 from collections import defaultdict
 
+import ast_roller.config as config
+
 class ResultNode:
     """
     Base class for all evaluation result nodes.
@@ -56,10 +58,15 @@ class SequenceResultNode(StructuralResultNode):
 
 
 class ListResultNode(StructuralResultNode):
-    def __init__(self, count_result_node: ResultNode, expr_result_nodes: list[ResultNode], raw_result: int | list[int]):
+    def __init__(self, count_result_node: ResultNode, expr_result_nodes: list[ResultNode], raw_result: list[int|list]):
         self.count_result_node = count_result_node
         self.expr_result_nodes = expr_result_nodes
         token = f'{count_result_node.token} {self.expr_result_token()}'
+        if config.sort_level >= 1:
+            if all(isinstance(result_elem, (int, float)) for result_elem in raw_result):
+                raw_result.sort()
+            elif config.sort_level >= 2:
+                raw_result.sort()
         super().__init__(raw_result, token)
 
     # In cases where count is zero, we never eval the expr node into a result.
