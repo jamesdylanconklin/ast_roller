@@ -1,4 +1,4 @@
 List Expansion: 1 4dF
   Count: 1 => 1
   Expression: 4dF
-  Results: 0
+  Results: [0]

@@ -1,6 +1,6 @@
 List Expansion: 1 d20
   Count: 1 => 1
   Expression: d20
-  Results: 4
+  Results: [4]
   0: 
     d20 => [4] = 4

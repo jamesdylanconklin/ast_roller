@@ -1,6 +1,6 @@
 List Expansion: 1 (((d8 + 4) + 2d6) / 2)
   Count: 1 => 1
   Expression: (((d8 + 4) + 2d6) / 2)
-  Results: 7
+  Results: [7]
   0: 
     (((d8 + 4) + 2d6) / 2) => ((([6] + 4) + [2, 2]) / 2) => 14 / 2 = 7.0

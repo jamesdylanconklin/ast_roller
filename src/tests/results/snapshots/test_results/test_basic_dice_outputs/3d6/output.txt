@@ -1,6 +1,6 @@
 List Expansion: 1 3d6
   Count: 1 => 1
   Expression: 3d6
-  Results: 8
+  Results: [8]
   0: 
     3d6 => [6, 1, 1] = 8

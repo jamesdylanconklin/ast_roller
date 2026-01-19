@@ -1,6 +1,6 @@
 List Expansion: 1 4d6 dl1
   Count: 1 => 1
   Expression: 4d6 dl1
-  Results: 13
+  Results: [13]
   0: 
     4d6 dl1 => [6, [91m1[0m, 1, 6] = 13

@@ -1,6 +1,6 @@
 List Expansion: 1 1d6
   Count: 1 => 1
   Expression: 1d6
-  Results: 3
+  Results: [3]
   0: 
     1d6 => [3] = 3

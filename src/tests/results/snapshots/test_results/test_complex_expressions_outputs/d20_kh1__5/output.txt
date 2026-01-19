@@ -1,6 +1,6 @@
 List Expansion: 1 (d20 kh1 + 5)
   Count: 1 => 1
   Expression: (d20 kh1 + 5)
-  Results: 17
+  Results: [17]
   0: 
     (d20 kh1 + 5) => ([[92m12[0m] + 5) => 12 + 5 = 17

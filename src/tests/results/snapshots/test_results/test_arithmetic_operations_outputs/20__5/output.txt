@@ -1,6 +1,6 @@
 List Expansion: 1 (20 / 5)
   Count: 1 => 1
   Expression: (20 / 5)
-  Results: 4
+  Results: [4]
   0: 
     (20 / 5) => 20 / 5 = 4.0

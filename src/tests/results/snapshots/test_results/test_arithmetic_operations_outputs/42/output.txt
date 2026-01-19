@@ -1,6 +1,6 @@
 List Expansion: 1 (4 + 2)
   Count: 1 => 1
   Expression: (4 + 2)
-  Results: 6
+  Results: [6]
   0: 
     (4 + 2) => 4 + 2 = 6

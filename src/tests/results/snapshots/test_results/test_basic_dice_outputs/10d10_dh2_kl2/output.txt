@@ -1,6 +1,6 @@
 List Expansion: 1 10d10 dh2 kl2
   Count: 1 => 1
   Expression: 10d10 dh2 kl2
-  Results: 3
+  Results: [3]
   0: 
     10d10 dh2 kl2 => [[92m2[0m, [92m1[0m, 5, 4, 4, 3, 2, [91m9[0m, 2, [91m10[0m] = 3

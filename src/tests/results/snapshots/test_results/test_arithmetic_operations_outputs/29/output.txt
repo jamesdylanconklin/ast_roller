@@ -1,6 +1,6 @@
 List Expansion: 1 29
   Count: 1 => 1
   Expression: 29
-  Results: 29
+  Results: [29]
   0: 
 29 => 29

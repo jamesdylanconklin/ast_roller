@@ -1,6 +1,6 @@
 List Expansion: 1 (0 - 10)
   Count: 1 => 1
   Expression: (0 - 10)
-  Results: -10
+  Results: [-10]
   0: 
     (0 - 10) => 0 - 10 = -10
