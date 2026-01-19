@@ -178,7 +178,7 @@ class TestListEvaluatorNode:
         list_eval_node = ListEvaluatorNode(None, eval_node)
 
         result_node = list_eval_node.evaluate()
-        assert result_node.raw_result == result
+        assert result_node.raw_result == [result]
         mock_fn.assert_called_once()
 
     @pytest.mark.parametrize("count_node, expr_node, result", LIST_EVALUATOR_CASES['one_dimensional'])
