@@ -164,7 +164,7 @@ class DiceRollEvaluatorNode(EvaluatorNode):
 
     def apply_reroll_directives(self, rolls: list[int]) -> list[int]:
         reroll_directives = self.directives['reroll']
-        reroll_range = range(reroll_directives.get('low', self.random_lower), reroll_directives.get('high', self.random_upper + 1))
+        reroll_range = range(reroll_directives.get('low', self.random_lower - 1) + 1, reroll_directives.get('high', self.random_upper + 1))
 
         final_rolls = []
         rerolled_indices = []
