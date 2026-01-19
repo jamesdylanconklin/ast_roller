@@ -73,7 +73,7 @@ class ListResultNode(StructuralResultNode):
     def expr_result_token(self) -> str:
         if len(self.expr_result_nodes) > 0:
             return self.expr_result_nodes[0].token
-        
+
         # TODO: Better verbiage. Not super clear to user right now
         # if the zero wasn't evaled or that the dropped expr was
         # skipped. Latter is true, needs to be more clearly noted.
@@ -85,7 +85,7 @@ class ListResultNode(StructuralResultNode):
     #     yield from self.count_result_node.traverse(depth + 1)
     #     for expr_node in self.expr_result_nodes:
     #         yield from expr_node.traverse(depth + 1)
-    
+
     def pretty_print(self, depth=0, indent=0):
         lines = []
         lines.append(f"{indent * '  '}List Expansion: {self.token}")
@@ -125,7 +125,7 @@ class BinaryOpResultNode(StructuralResultNode):
         # There should be nothing but binop nodes and leaves below us.
         # If number, token suffices.
         # If binop, recurse on dice_expansion.
-        # If dice, use die_results. 
+        # If dice, use die_results.
         if hasattr(self.left, 'dice_expansion'):
             left_expansion = self.left.dice_expansion()
         elif hasattr(self.left, 'format_die_results'):
@@ -136,7 +136,7 @@ class BinaryOpResultNode(StructuralResultNode):
             right_expansion = self.right.dice_expansion()
         elif hasattr(self.right, 'die_results'):
             right_expansion = f"{self.right.die_results}"
-        
+
         return f"({left_expansion} {self.operator} {right_expansion})"
 
     # Right now, we don't delegate printing to children because we'd rather end up
@@ -160,7 +160,7 @@ class BinaryOpResultNode(StructuralResultNode):
     #     yield from self.children['left'].traverse(depth + 1)
     #     yield from self.children['right'].traverse(depth + 1)
 
-    
+
 class LeafResultNode(ResultNode):
     """Result node for leaf values like numbers and dice rolls."""
 
@@ -169,11 +169,22 @@ class LeafResultNode(ResultNode):
 
 class DiceResultNode(LeafResultNode):
     """Result node for dice rolls, storing individual die results."""
-    def __init__(self, roll_string: str, raw_result: int, die_results: list[int], to_keep: dict[int, int] = {}, to_drop: dict[int, int] = {}):
+    def __init__(
+        self,
+        roll_string: str,
+        raw_result: int,
+        die_results: list[int],
+        to_keep: dict[int, int] = {},
+        to_drop: dict[int, int] = {},
+        original_rolls: list[int] = [],
+        rerolled_indices: list[bool] = []
+    ):
         super().__init__(raw_result, token=roll_string)
         self.die_results = die_results  # List of individual die roll results
         self.to_keep = to_keep
         self.to_drop = to_drop
+        self.original_rolls = original_rolls
+        self.rerolled_indices = rerolled_indices
 
     def format_die_results(self) -> str:
         dropped, kept = defaultdict(int), defaultdict(int)
@@ -183,15 +194,19 @@ class DiceResultNode(LeafResultNode):
         color_end = '\033[0m'
 
         formatted_results = []
-        for die in self.die_results:
+        for die, original_die, rerolled in zip(self.die_results, self.original_rolls, self.rerolled_indices):
+            reroll_string = ''
+            if rerolled:
+                reroll_string = f"{original_die}->"
+
             if self.to_drop[die] > dropped[die]:
-                formatted_results.append(f"{red_start}{die}{color_end}")
+                formatted_results.append(f"{reroll_string}{red_start}{die}{color_end}")
                 dropped[die] += 1
             elif self.to_keep[die] > kept[die]:
-                formatted_results.append(f"{green_start}{die}{color_end}")
+                formatted_results.append(f"{reroll_string}{green_start}{die}{color_end}")
                 kept[die] += 1
             else:
-                formatted_results.append(f"{die}")
+                formatted_results.append(f"{reroll_string}{die}")
         return '[' + ', '.join(formatted_results) + ']'
 
     def pretty_print(self, _, indent, colorize=True):
@@ -209,5 +224,4 @@ class NumberResultNode(LeafResultNode):
 
     def pretty_print(self, _, indent):
         return f"{indent * ''}{self.token} => {self.raw_result}"
-    
-    
+

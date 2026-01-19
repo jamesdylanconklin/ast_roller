@@ -28,9 +28,10 @@ expression: "(" expression ")" -> parens
           | NATURAL_NUM -> natural_num
           | INTEGER -> integer
 
-dice_roll_directives: DICE_ROLL_DIRECTIVE*
+dice_roll_directives: (DICE_ROLL_DIRECTIVE | DICE_REROLL_DIRECTIVE)*
 DICE_ROLL: /([1-9]\d*)?d([1-9]\d*|[Ff])/i
 DICE_ROLL_DIRECTIVE: /[kd][hl]\d+/i
+DICE_REROLL_DIRECTIVE: /r[hl]?\d+/i
 OPERATOR_AS: "+" | "-"
 OPERATOR_MD: "*" | "/"
 FLOAT: /-?\d*\.\d+/

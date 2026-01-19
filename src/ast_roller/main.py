@@ -20,7 +20,7 @@ def main():
     )
 
     arg_parser.add_argument("roll_string", nargs='*', help="The dice roll string to evaluate.")
-    
+
     global args
     args = arg_parser.parse_args()
     # Set global config based on args
@@ -44,3 +44,4 @@ def main():
     except Exception as e:
         print(f"Could not process roll string {roll_string}")
         print(f"Error: {e}")
+        raise e

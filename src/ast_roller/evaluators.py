@@ -15,7 +15,7 @@ class EvaluatorNode(ABC):
     Base class for all evaluable nodes.
     Each evaluator node can evaluate itself to produce a ResultNode.
     """
-    
+
     @abstractmethod
     def evaluate(self) -> ResultNode:
         """Evaluate this node and return a ResultNode containing the result."""
@@ -39,24 +39,27 @@ class ListEvaluatorNode(EvaluatorNode):
     def __init__(self, count_expr_node: EvaluatorNode, loop_expr_node: EvaluatorNode):
         self.count_expr_node = count_expr_node
         self.loop_expr_node = loop_expr_node
-    
+
     def evaluate(self) -> ListResultNode:
         if self.count_expr_node is None:
             expr_result_node = self.loop_expr_node.evaluate()
             # Single expression case - just evaluate it
-            return ListResultNode(NumberResultNode(1), [expr_result_node], int(expr_result_node.raw_result))
+            result = expr_result_node.raw_result
+            if not isinstance(result, list):
+                result = [int(result)]
+            return ListResultNode(NumberResultNode(1), [expr_result_node], result)
 
         # Two expression case - count and loop
         count_result = self.count_expr_node.evaluate()
         count = int(count_result.raw_result)
-        
+
         # TODO: Consider error for negative count.
         if count <= 0:
             return ListResultNode(count_result, [],[])
-        
+
         # Evaluate the loop expression count times
         loop_results = [self.loop_expr_node.evaluate() for _ in range(count)]
-        
+
         # Extract raw results for the array
         raw_results = [r.raw_result for r in loop_results]
 
@@ -74,18 +77,18 @@ class BinaryOpEvaluatorNode(EvaluatorNode):
     def __init__(self, left: EvaluatorNode, operator: str, right: EvaluatorNode):
         if operator not in ['+', '-', '*', '/']:
             raise ValueError(f"Unknown binary operator: {operator}")
-        
+
         self.left = left
         self.operator = operator  # Token like '+', '-', '*', '/'
         self.right = right
 
         if not all([hasattr(node, 'evaluate') for node in [left, right]]):
             raise ValueError("Left and right operands must expose evaluate functions")
-    
+
     def evaluate(self) -> BinaryOpResultNode:
         left_result = self.left.evaluate()
         right_result = self.right.evaluate()
-        
+
         if self.operator == '+':
             value = left_result.raw_result + right_result.raw_result
         elif self.operator == '-':
@@ -94,7 +97,7 @@ class BinaryOpEvaluatorNode(EvaluatorNode):
             value = left_result.raw_result * right_result.raw_result
         elif self.operator == '/':
             value = left_result.raw_result / right_result.raw_result
-        
+
         return BinaryOpResultNode(self.operator, left_result, right_result, value)
 
 
@@ -104,7 +107,7 @@ class DiceRollEvaluatorNode(EvaluatorNode):
     def __init__(self, dice_token: str, directives: list[str] = []):
         self.dice_token = str(dice_token)
         self.directive_tokens = [str(d) for d in directives]
-        self.directives = self.parse_directives() 
+        self.directives = self.parse_directives()
 
         # Parse the dice token (e.g., "3d6", "d20", "4dF")
         match = re.match(r'(\d*)d(\d+|[Ff])', self.dice_token)
@@ -129,7 +132,14 @@ class DiceRollEvaluatorNode(EvaluatorNode):
 
         if sum([*self.directives['keep'].values(), *self.directives['drop'].values()]) > self.num_dice:
             raise ValueError("Total number of dice to keep/drop exceeds number of dice rolled")
-        
+
+        if self.directives['reroll'].get('high', None) is not None and self.directives['reroll']['high'] > self.random_upper:
+            raise ValueError("Reroll high directive must not be greater than the maximum die value")
+
+        if all(k in self.directives['reroll'] for k in ['high', 'low']):
+            if self.directives['reroll']['low'] + 1 >= self.directives['reroll']['high']:
+                raise ValueError("Overlapping reroll directives are not allowed")
+
         if self.random_lower == self.random_upper:
             raise ValueError(f"Die must have more than one side, got {self.random_upper}")
 
@@ -138,22 +148,38 @@ class DiceRollEvaluatorNode(EvaluatorNode):
         return f"{' '.join([self.dice_token, *self.directive_tokens])}"
 
     def parse_directives(self) -> dict[str, dict[str, int]]:
-        directives = { 'drop': {}, 'keep': {} }
-        directive_pattern = re.compile(r'^(?P<keep_drop>[kd])(?P<high_low>[hl])(?P<count>\d+)')
+        directives = { 'drop': {}, 'keep': {}, 'reroll': {}}
+        directive_pattern = re.compile(r'^(?P<keep_drop_reroll>[kdr])(?P<high_low>[hl]?)(?P<count>\d+)')
 
         for token in self.directive_tokens:
             match = directive_pattern.match(token)
             if not match:
                 raise ValueError(f"Invalid dice roll directive: {token}")
-            keep_drop = { 'k': 'keep', 'd': 'drop' }[match.group('keep_drop').lower()]
-            high_low = {'h': 'high', 'l': 'low' }[match.group('high_low').lower()]
+            keep_drop_reroll = { 'k': 'keep', 'd': 'drop', 'r': 'reroll' }[match.group('keep_drop_reroll').lower()]
+            high_low = {'h': 'high', 'l': 'low' }.get(match.group('high_low').lower(), 'low')
             count = int(match.group('count'))
 
-            directives[keep_drop][high_low] = count
-
+            directives[keep_drop_reroll][high_low] = count
         return directives
 
-    def apply_directives(self, rolls: list[int]) -> tuple[int, dict[int, int], dict[int, int]]:
+    def apply_reroll_directives(self, rolls: list[int]) -> list[int]:
+        reroll_directives = self.directives['reroll']
+        reroll_range = range(reroll_directives.get('low', self.random_lower), reroll_directives.get('high', self.random_upper + 1))
+
+        final_rolls = []
+        rerolled_indices = []
+
+        for roll in rolls:
+            if roll not in reroll_range:
+                final_rolls.append(random.randint(self.random_lower, self.random_upper))
+                rerolled_indices.append(True)
+            else:
+                final_rolls.append(roll)
+                rerolled_indices.append(False)
+
+        return final_rolls, rerolled_indices
+
+    def apply_keep_drop_directives(self, rolls: list[int]) -> tuple[int, dict[int, int], dict[int, int]]:
         to_keep, to_drop = defaultdict(int), defaultdict(int)
 
         sorted_rolls = sorted(rolls)
@@ -186,21 +212,29 @@ class DiceRollEvaluatorNode(EvaluatorNode):
         return result, to_keep, to_drop
 
     def evaluate(self) -> DiceResultNode:
-        rolls = [random.randint(self.random_lower, self.random_upper) for _ in range(self.num_dice)]
-        
+        first_rolls = [random.randint(self.random_lower, self.random_upper) for _ in range(self.num_dice)]
+        final_rolls, rerolled_indices = self.apply_reroll_directives(first_rolls)
+
         # Apply directives
-        result, to_keep, to_drop = self.apply_directives(rolls)
+        result, to_keep, to_drop = self.apply_keep_drop_directives(final_rolls)
 
-        return DiceResultNode(self.combined_token(), result, rolls, to_keep=to_keep, to_drop=to_drop)
-
+        return DiceResultNode(
+            self.combined_token(),
+            result,
+            final_rolls,
+            to_keep=to_keep,
+            to_drop=to_drop,
+            original_rolls=first_rolls,
+            rerolled_indices=rerolled_indices
+        )
 
 class NumberEvaluatorNode(EvaluatorNode):
     """Handles numeric literals (integers, floats, natural numbers)."""
-    
+
     def __init__(self, number_token: str, number_type: str):
         self.number_token = number_token
         self.number_type = number_type  # 'integer', 'float', 'natural_num'
-    
+
     def evaluate(self) -> NumberResultNode:
         if self.number_type == 'float':
             value = float(self.number_token)
@@ -212,5 +246,5 @@ class NumberEvaluatorNode(EvaluatorNode):
                 raise ValueError(f"Natural number must be positive, got {value}")
         else:
             raise ValueError(f"Unknown number type: {self.number_type}")
-        
+
         return NumberResultNode(value)
