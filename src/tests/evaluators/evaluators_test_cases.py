@@ -51,6 +51,19 @@ DICE_ROLL_CASES = {
             ("99d100", ["kh10", "kl20", "dl30", "dh40"]),  # Oversubscribed across multiple directives
         ]
     },
+    "reroll": {
+        "valid": [
+            ('5d6', ['r2'], {"result": 19, "calls": [(1,6)]*7, "raw_results": [6, 1, 3, 4, 5]}), # Two rerolls
+            ('20d20', ['rh20'], {"result": 210 - 20 + 1, "calls": [(1,20)]*21, "raw_results": list(range(1,21))}), # One reroll
+            ('2d10', ['rl0'], {"result": 3, "calls": [(1,10)]*2, "raw_results": [1, 2]}), # No rerolls
+            ('4d6', ['rh5'], {"result": 10, "calls": [(1,6)]*4, "raw_results": [1, 2, 3, 4]}), # No rerolls
+        ],
+        "invalid": [
+            ("2d6", ["rl6"]),  # Reroll low at least max die value
+            ("3d8", ["rh1"]),  # Reroll high at most min die value
+            ('5d6', ['r3', 'rh4']), # Effectively a full reroll range
+        ]
+    }
 }
 
 # Test cases for NumberEvaluatorNode

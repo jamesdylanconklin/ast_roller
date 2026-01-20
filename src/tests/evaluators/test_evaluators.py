@@ -123,6 +123,15 @@ class TestDiceRollEvaluatorNode:
         with pytest.raises(ValueError):
             DiceRollEvaluatorNode(die_str)
 
+    @pytest.mark.parametrize("die_str,directives,case_config", DICE_ROLL_CASES['reroll']['valid'])
+    @patch('random.randint')
+    def test_rerolling_dice(self, mock_randint, die_str, directives, case_config):
+        mock_randint.side_effect = RollingRandom().randint
+        node = DiceRollEvaluatorNode(die_str, directives)
+        result_node = node.evaluate()
+        assert result_node.raw_result == case_config["result"]
+        mock_randint.assert_has_calls([call(*args) for args in case_config["calls"]])
+
     @pytest.mark.parametrize("die_str,directives,case_config", DICE_ROLL_CASES['keep_drop']['valid'])
     @patch('random.randint')
     def test_keep_drop_dice_roll(self, mock_randint, die_str, directives, case_config):
