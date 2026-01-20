@@ -197,6 +197,7 @@ class DiceRollEvaluatorNode(EvaluatorNode):
                     to_drop[roll] += 1
                 left_idx += count
 
+        # This really only looks at one keep value.
         for high_low, count in self.directives['keep'].items():
             if high_low == 'high':
                 for roll in sorted_rolls[right_idx - count : right_idx]:
@@ -213,9 +214,9 @@ class DiceRollEvaluatorNode(EvaluatorNode):
 
     def evaluate(self) -> DiceResultNode:
         first_rolls = [random.randint(self.random_lower, self.random_upper) for _ in range(self.num_dice)]
-        final_rolls, rerolled_indices = self.apply_reroll_directives(first_rolls)
 
         # Apply directives
+        final_rolls, rerolled_indices = self.apply_reroll_directives(first_rolls)
         result, to_keep, to_drop = self.apply_keep_drop_directives(final_rolls)
 
         return DiceResultNode(
