@@ -133,8 +133,14 @@ class DiceRollEvaluatorNode(EvaluatorNode):
         if sum([*self.directives['keep'].values(), *self.directives['drop'].values()]) > self.num_dice:
             raise ValueError("Total number of dice to keep/drop exceeds number of dice rolled")
 
-        if self.directives['reroll'].get('high', None) is not None and self.directives['reroll']['high'] > self.random_upper:
-            raise ValueError("Reroll high directive must not be greater than the maximum die value")
+        if self.directives['reroll'].get('low', None) is not None and self.directives['reroll']['low'] >= self.random_upper:
+            raise ValueError("Reroll low directive must be less than the maximum die value")
+
+        if self.directives['reroll'].get('high', None) is not None and self.directives['reroll']['high'] <= self.random_lower:
+            raise ValueError("Reroll high directive must be greater than the minimum die value")
+
+        if any([val not in range(self.random_lower, self.random_upper + 1) for val in self.directives['reroll'].values()]):
+            raise ValueError("Reroll directive values must be within the die value range")
 
         if all(k in self.directives['reroll'] for k in ['high', 'low']):
             if self.directives['reroll']['low'] + 1 >= self.directives['reroll']['high']:
@@ -149,7 +155,7 @@ class DiceRollEvaluatorNode(EvaluatorNode):
 
     def parse_directives(self) -> dict[str, dict[str, int]]:
         directives = { 'drop': {}, 'keep': {}, 'reroll': {}}
-        directive_pattern = re.compile(r'^(?P<keep_drop_reroll>[kdr])(?P<high_low>[hl]?)(?P<count>\d+)')
+        directive_pattern = re.compile(r'^(?P<keep_drop_reroll>[kdr])(?P<high_low>[hl]?)(?P<count>-?\d+)')
 
         for token in self.directive_tokens:
             match = directive_pattern.match(token)
