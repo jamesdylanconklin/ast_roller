@@ -27,8 +27,6 @@ def main():
     config.sort_level = args.sort
     config.verbose = args.verbose
 
-    # import pdb; pdb.set_trace()
-
     roll_string = " ".join(args.roll_string) if args.roll_string else '1d20'
 
     try:
@@ -44,4 +42,3 @@ def main():
     except Exception as e:
         print(f"Could not process roll string {roll_string}")
         print(f"Error: {e}")
-        raise e
