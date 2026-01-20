@@ -1,0 +1,14 @@
+List Expansion: 5 5
+  Count: 5 => 5
+  Expression: 5
+  Results: [5, 5, 5, 5, 5]
+  0: 
+5 => 5
+  1: 
+5 => 5
+  2: 
+5 => 5
+  3: 
+5 => 5
+  4: 
+5 => 5

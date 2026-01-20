@@ -10,7 +10,9 @@ from ast_roller.grammar import parser, transformer
 from pathlib import Path
 
 class TestPrettyPrinting:
-    def run_test(self, roll_string, seed):
+    def run_test(self, roll_string, seed, sort_level=0):
+        import ast_roller.config as config
+        config.sort_level = sort_level
         random.seed(seed)
         result = transformer.transform(parser.parse(roll_string)).evaluate()
         return result.pretty_print(depth=0, indent=0)
@@ -47,6 +49,12 @@ class TestPrettyPrinting:
     def test_list_expressions_outputs(self, roll_string, snapshot):
         suite_seed = 13579
         output = self.run_test(roll_string, suite_seed)
+        snapshot.assert_match(output, 'output.txt')
+
+    @pytest.mark.parametrize("roll_string", SNAPSHOT_CASES['list_expressions'])
+    def test_sorted_list_expressions_outputs(self, roll_string, snapshot):
+        suite_seed = 13579
+        output = self.run_test(roll_string, suite_seed, sort_level=1)
         snapshot.assert_match(output, 'output.txt')
 
     @pytest.mark.parametrize("roll_string", SNAPSHOT_CASES['complex_expressions'])
