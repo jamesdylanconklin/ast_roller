@@ -1,8 +1,11 @@
 # ast_roller
 
-<!-- TODO: Add shields/badges >
-<!-- TODO: Add test coverage badge (TBD) -->
-<!-- TODO: Add GitHub Actions status badge (pass/fail) once build actions are set up -->
+[![CI](https://github.com/jamesdylanconklin/ast_roller/workflows/CI/badge.svg)](https://github.com/jamesdylanconklin/ast_roller/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/jamesdylanconklin/ast_roller/branch/main/graph/badge.svg)](https://codecov.io/gh/jamesdylanconklin/ast_roller)
+[![PyPI version](https://badge.fury.io/py/ast-roller.svg)](https://badge.fury.io/py/ast-roller)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 An expressive, abstract syntax tree-based dice roller.
 
@@ -13,7 +16,7 @@ TBD
 
 As a library:
 
-```shel
+```shell
 >>> from ast_roller.grammar import parser, transformer
 >>> roll_string = '2 2d20 kh1 + 8'
 >>> eval_root = transformer.transform(parser.parse(roll_string))
