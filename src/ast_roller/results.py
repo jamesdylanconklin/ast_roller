@@ -2,10 +2,11 @@
 Result node classes for the dice rolling evaluation system.
 """
 
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from collections import defaultdict
 
 import ast_roller.config as config
+
 
 class ResultNode:
     """
@@ -32,15 +33,17 @@ class ResultNode:
     def pretty_print(self, depth: int, indent) -> str:
         pass
 
+
 class StructuralResultNode(ResultNode):
     """Result node for structural constructs like lists."""
 
     pass
 
+
 class SequenceResultNode(StructuralResultNode):
     def __init__(self, expr_result_nodes: list[ResultNode]):
         raw_result = [node.raw_result for node in expr_result_nodes]
-        token = ', '.join(node.token for node in expr_result_nodes)
+        token = ", ".join(node.token for node in expr_result_nodes)
         super().__init__(raw_result, token)
         self.expr_result_nodes = expr_result_nodes
 
@@ -50,7 +53,9 @@ class SequenceResultNode(StructuralResultNode):
 
         for expr_node_idx in range(len(self.expr_result_nodes)):
             expr_node = self.expr_result_nodes[expr_node_idx]
-            lines.append(f"{(indent + 1) * '  '}Expression {expr_node_idx}: {expr_node.token} => {expr_node.raw_result}")
+            lines.append(
+                f"{(indent + 1) * '  '}Expression {expr_node_idx}: {expr_node.token} => {expr_node.raw_result}"
+            )
             prefix = f"{(indent + 1) * '  '}{expr_node_idx}: "
             lines.append(f"{expr_node.pretty_print(depth + 1, len(prefix) // 2)}")
 
@@ -58,10 +63,12 @@ class SequenceResultNode(StructuralResultNode):
 
 
 class ListResultNode(StructuralResultNode):
-    def __init__(self, count_result_node: ResultNode, expr_result_nodes: list[ResultNode], raw_result: list[int|list]):
+    def __init__(
+        self, count_result_node: ResultNode, expr_result_nodes: list[ResultNode], raw_result: list[int | list]
+    ):
         self.count_result_node = count_result_node
         self.expr_result_nodes = expr_result_nodes
-        token = f'{count_result_node.token} {self.expr_result_token()}'
+        token = f"{count_result_node.token} {self.expr_result_token()}"
         if config.sort_level >= 1:
             if all(isinstance(result_elem, (int, float)) for result_elem in raw_result):
                 raw_result.sort()
@@ -77,8 +84,7 @@ class ListResultNode(StructuralResultNode):
         # TODO: Better verbiage. Not super clear to user right now
         # if the zero wasn't evaled or that the dropped expr was
         # skipped. Latter is true, needs to be more clearly noted.
-        return '[Expression Not Evaluated]'
-
+        return "[Expression Not Evaluated]"
 
     # def traverse(self, depth=0):
     #     yield (self, depth)
@@ -89,7 +95,9 @@ class ListResultNode(StructuralResultNode):
     def pretty_print(self, depth=0, indent=0):
         lines = []
         lines.append(f"{indent * '  '}List Expansion: {self.token}")
-        lines.append(f"{(indent + 1) * '  '}Count: {self.count_result_node.token} => {self.count_result_node.raw_result}")
+        lines.append(
+            f"{(indent + 1) * '  '}Count: {self.count_result_node.token} => {self.count_result_node.raw_result}"
+        )
         lines.append(f"{(indent + 1) * '  '}Expression: {self.expr_result_token()}")
         lines.append(f"{(indent + 1) * '  '}Results: {self.raw_result}")
 
@@ -126,15 +134,15 @@ class BinaryOpResultNode(StructuralResultNode):
         # If number, token suffices.
         # If binop, recurse on dice_expansion.
         # If dice, use die_results.
-        if hasattr(self.left, 'dice_expansion'):
+        if hasattr(self.left, "dice_expansion"):
             left_expansion = self.left.dice_expansion()
-        elif hasattr(self.left, 'format_die_results'):
+        elif hasattr(self.left, "format_die_results"):
             left_expansion = f"{self.left.format_die_results()}"
 
         right_expansion = self.right.token
-        if hasattr(self.right, 'dice_expansion'):
+        if hasattr(self.right, "dice_expansion"):
             right_expansion = self.right.dice_expansion()
-        elif hasattr(self.right, 'die_results'):
+        elif hasattr(self.right, "die_results"):
             right_expansion = f"{self.right.die_results}"
 
         return f"({left_expansion} {self.operator} {right_expansion})"
@@ -152,8 +160,8 @@ class BinaryOpResultNode(StructuralResultNode):
         result_eq = f"{self.left.raw_result} {self.operator} {self.right.raw_result}"
 
         if expanded_dice_eq != raw_eq:
-            return (f"{indent * '  '}{raw_eq} => {expanded_dice_eq} => {result_eq} = {self.raw_result}")
-        return (f"{indent * '  '}{raw_eq} => {result_eq} = {self.raw_result}")
+            return f"{indent * '  '}{raw_eq} => {expanded_dice_eq} => {result_eq} = {self.raw_result}"
+        return f"{indent * '  '}{raw_eq} => {result_eq} = {self.raw_result}"
 
     # def traverse(self, depth=0):
     #     yield (self, depth)
@@ -167,8 +175,10 @@ class LeafResultNode(ResultNode):
     # def traverse(self, depth=0):
     #     yield (self, depth)
 
+
 class DiceResultNode(LeafResultNode):
     """Result node for dice rolls, storing individual die results."""
+
     def __init__(
         self,
         roll_string: str,
@@ -177,7 +187,7 @@ class DiceResultNode(LeafResultNode):
         to_keep: dict[int, int] = {},
         to_drop: dict[int, int] = {},
         original_rolls: list[int] = [],
-        rerolled_indices: list[bool] = []
+        rerolled_indices: list[bool] = [],
     ):
         super().__init__(raw_result, token=roll_string)
         self.die_results = die_results  # List of individual die roll results
@@ -189,13 +199,13 @@ class DiceResultNode(LeafResultNode):
     def format_die_results(self) -> str:
         dropped, kept = defaultdict(int), defaultdict(int)
 
-        green_start = '\033[92m'
-        red_start = '\033[91m'
-        color_end = '\033[0m'
+        green_start = "\033[92m"
+        red_start = "\033[91m"
+        color_end = "\033[0m"
 
         formatted_results = []
         for die, original_die, rerolled in zip(self.die_results, self.original_rolls, self.rerolled_indices):
-            reroll_string = ''
+            reroll_string = ""
             if rerolled:
                 reroll_string = f"{original_die}->"
 
@@ -207,7 +217,7 @@ class DiceResultNode(LeafResultNode):
                 kept[die] += 1
             else:
                 formatted_results.append(f"{reroll_string}{die}")
-        return '[' + ', '.join(formatted_results) + ']'
+        return "[" + ", ".join(formatted_results) + "]"
 
     def pretty_print(self, _, indent, colorize=True):
         formatted_results = self.die_results
@@ -215,6 +225,7 @@ class DiceResultNode(LeafResultNode):
             formatted_results = self.format_die_results()
 
         return f"{indent * '  '}{self.token} => {formatted_results} = {self.raw_result}"
+
 
 class NumberResultNode(LeafResultNode):
     """Result node for numeric values."""
@@ -224,4 +235,3 @@ class NumberResultNode(LeafResultNode):
 
     def pretty_print(self, _, indent):
         return f"{indent * ''}{self.token} => {self.raw_result}"
-

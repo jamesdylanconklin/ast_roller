@@ -3,8 +3,9 @@ import logging
 import sys
 from pathlib import Path
 
-from ast_roller.grammar import parser, transformer
 import ast_roller.config as config
+from ast_roller.grammar import parser, transformer
+
 
 def get_logger():
     logger = logging.getLogger(__name__)
@@ -13,7 +14,7 @@ def get_logger():
         log_dir = Path(args.log_file).parent
         if not log_dir.exists():
             raise FileNotFoundError(f"Specified log file directory {log_dir} does not exist.")
-        
+
         logger.addHandler(logging.FileHandler(args.log_file))
     return logger
 
@@ -25,38 +26,34 @@ def main(argv=None):
     )
 
     arg_parser.add_argument(
-        '-s', '--sort',
-        action='count',
+        "-s",
+        "--sort",
+        action="count",
         default=0,
-        help="Specify sort level. -s sorts leaf-level rolls, -ss attempts to sort nested rolls."
+        help="Specify sort level. -s sorts leaf-level rolls, -ss attempts to sort nested rolls.",
     )
 
     arg_parser.add_argument(
-        '-v', '--verbose',
-        action='store_true',
-        help="Enable verbose output with detailed roll information."
+        "-v", "--verbose", action="store_true", help="Enable verbose output with detailed roll information."
     )
 
     arg_parser.add_argument(
-        '-l', '--log',
-        action='store_true',
+        "-l",
+        "--log",
+        action="store_true",
         default=False,
-        help='Enable logging via configured base handlers without writing to a dedicated file.',
+        help="Enable logging via configured base handlers without writing to a dedicated file.",
     )
 
     arg_parser.add_argument(
-        '--log-file',
+        "--log-file",
         default=None,
-        help='Target file for persisted log. Use -l=<file> or --log=<file>.',
+        help="Target file for persisted log. Use -l=<file> or --log=<file>.",
     )
 
-    arg_parser.add_argument(
-        '-d', '--desc',
-        default='*',
-        help='Line descriptor for result in log file'
-    )
+    arg_parser.add_argument("-d", "--desc", default="*", help="Line descriptor for result in log file")
 
-    arg_parser.add_argument("roll_string", nargs='*', help="The dice roll string to evaluate.")
+    arg_parser.add_argument("roll_string", nargs="*", help="The dice roll string to evaluate.")
 
     global args
     argv = sys.argv[1:] if argv is None else argv
@@ -66,7 +63,7 @@ def main(argv=None):
     config.sort_level = args.sort
     config.verbose = args.verbose
 
-    roll_string = " ".join(args.roll_string) if args.roll_string else '1d20'
+    roll_string = " ".join(args.roll_string) if args.roll_string else "1d20"
 
     try:
         parse_tree = parser.parse(roll_string)

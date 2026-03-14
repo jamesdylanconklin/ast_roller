@@ -6,9 +6,18 @@ import random
 import re
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from .results import SequenceResultNode, ListResultNode, DiceResultNode, NumberResultNode, BinaryOpResultNode, ResultNode
+
+from .results import (
+    BinaryOpResultNode,
+    DiceResultNode,
+    ListResultNode,
+    NumberResultNode,
+    ResultNode,
+    SequenceResultNode,
+)
 
 ### EVALUATOR NODES
+
 
 class EvaluatorNode(ABC):
     """
@@ -21,6 +30,7 @@ class EvaluatorNode(ABC):
         """Evaluate this node and return a ResultNode containing the result."""
         pass
 
+
 class SequenceEvaluatorNode(EvaluatorNode):
     """Handles sequences of expressions separated by commas."""
 
@@ -32,6 +42,7 @@ class SequenceEvaluatorNode(EvaluatorNode):
     def evaluate(self) -> ListResultNode:
         results = [expr_node.evaluate() for expr_node in self.expr_nodes]
         return SequenceResultNode(results)
+
 
 class ListEvaluatorNode(EvaluatorNode):
     """Handles list expressions - space-separated values with potential repetition."""
@@ -55,7 +66,7 @@ class ListEvaluatorNode(EvaluatorNode):
 
         # TODO: Consider error for negative count.
         if count <= 0:
-            return ListResultNode(count_result, [],[])
+            return ListResultNode(count_result, [], [])
 
         # Evaluate the loop expression count times
         loop_results = [self.loop_expr_node.evaluate() for _ in range(count)]
@@ -75,27 +86,27 @@ class BinaryOpEvaluatorNode(EvaluatorNode):
     """Handles arithmetic operations (+, -, *, /)."""
 
     def __init__(self, left: EvaluatorNode, operator: str, right: EvaluatorNode):
-        if operator not in ['+', '-', '*', '/']:
+        if operator not in ["+", "-", "*", "/"]:
             raise ValueError(f"Unknown binary operator: {operator}")
 
         self.left = left
         self.operator = operator  # Token like '+', '-', '*', '/'
         self.right = right
 
-        if not all([hasattr(node, 'evaluate') for node in [left, right]]):
+        if not all([hasattr(node, "evaluate") for node in [left, right]]):
             raise ValueError("Left and right operands must expose evaluate functions")
 
     def evaluate(self) -> BinaryOpResultNode:
         left_result = self.left.evaluate()
         right_result = self.right.evaluate()
 
-        if self.operator == '+':
+        if self.operator == "+":
             value = left_result.raw_result + right_result.raw_result
-        elif self.operator == '-':
+        elif self.operator == "-":
             value = left_result.raw_result - right_result.raw_result
-        elif self.operator == '*':
+        elif self.operator == "*":
             value = left_result.raw_result * right_result.raw_result
-        elif self.operator == '/':
+        elif self.operator == "/":
             value = left_result.raw_result / right_result.raw_result
 
         return BinaryOpResultNode(self.operator, left_result, right_result, value)
@@ -110,14 +121,14 @@ class DiceRollEvaluatorNode(EvaluatorNode):
         self.directives = self.parse_directives()
 
         # Parse the dice token (e.g., "3d6", "d20", "4dF")
-        match = re.match(r'(\d*)d(\d+|[Ff])', self.dice_token)
+        match = re.match(r"(\d*)d(\d+|[Ff])", self.dice_token)
         if not match:
             raise ValueError(f"Invalid dice token: {self.dice_token}")
 
         count_str, sides_str = match.groups()
         self.num_dice = int(count_str) if count_str else 1
 
-        if sides_str.lower() == 'f':
+        if sides_str.lower() == "f":
             self.random_lower = -1
             self.random_upper = 1
         else:
@@ -130,47 +141,57 @@ class DiceRollEvaluatorNode(EvaluatorNode):
         if self.num_dice <= 0:
             raise ValueError(f"Number of dice must be positive, got {self.num_dice}")
 
-        if sum([*self.directives['keep'].values(), *self.directives['drop'].values()]) > self.num_dice:
+        if sum([*self.directives["keep"].values(), *self.directives["drop"].values()]) > self.num_dice:
             raise ValueError("Total number of dice to keep/drop exceeds number of dice rolled")
 
-        if self.directives['reroll'].get('low', None) is not None and self.directives['reroll']['low'] >= self.random_upper:
+        if (
+            self.directives["reroll"].get("low", None) is not None
+            and self.directives["reroll"]["low"] >= self.random_upper
+        ):
             raise ValueError("Reroll low directive must be less than the maximum die value")
 
-        if self.directives['reroll'].get('high', None) is not None and self.directives['reroll']['high'] <= self.random_lower:
+        if (
+            self.directives["reroll"].get("high", None) is not None
+            and self.directives["reroll"]["high"] <= self.random_lower
+        ):
             raise ValueError("Reroll high directive must be greater than the minimum die value")
 
-        if any([val not in range(self.random_lower, self.random_upper + 1) for val in self.directives['reroll'].values()]):
+        if any(
+            [val not in range(self.random_lower, self.random_upper + 1) for val in self.directives["reroll"].values()]
+        ):
             raise ValueError("Reroll directive values must be within the die value range")
 
-        if all(k in self.directives['reroll'] for k in ['high', 'low']):
-            if self.directives['reroll']['low'] + 1 >= self.directives['reroll']['high']:
+        if all(k in self.directives["reroll"] for k in ["high", "low"]):
+            if self.directives["reroll"]["low"] + 1 >= self.directives["reroll"]["high"]:
                 raise ValueError("Overlapping reroll directives are not allowed")
 
         if self.random_lower == self.random_upper:
             raise ValueError(f"Die must have more than one side, got {self.random_upper}")
 
-
     def combined_token(self) -> str:
         return f"{' '.join([self.dice_token, *self.directive_tokens])}"
 
     def parse_directives(self) -> dict[str, dict[str, int]]:
-        directives = { 'drop': {}, 'keep': {}, 'reroll': {}}
-        directive_pattern = re.compile(r'^(?P<keep_drop_reroll>[kdr])(?P<high_low>[hl]?)(?P<count>-?\d+)')
+        directives = {"drop": {}, "keep": {}, "reroll": {}}
+        directive_pattern = re.compile(r"^(?P<keep_drop_reroll>[kdr])(?P<high_low>[hl]?)(?P<count>-?\d+)")
 
         for token in self.directive_tokens:
             match = directive_pattern.match(token)
             if not match:
                 raise ValueError(f"Invalid dice roll directive: {token}")
-            keep_drop_reroll = { 'k': 'keep', 'd': 'drop', 'r': 'reroll' }[match.group('keep_drop_reroll').lower()]
-            high_low = {'h': 'high', 'l': 'low' }.get(match.group('high_low').lower(), 'low')
-            count = int(match.group('count'))
+            keep_drop_reroll = {"k": "keep", "d": "drop", "r": "reroll"}[match.group("keep_drop_reroll").lower()]
+            high_low = {"h": "high", "l": "low"}.get(match.group("high_low").lower(), "low")
+            count = int(match.group("count"))
 
             directives[keep_drop_reroll][high_low] = count
         return directives
 
     def apply_reroll_directives(self, rolls: list[int]) -> list[int]:
-        reroll_directives = self.directives['reroll']
-        reroll_range = range(reroll_directives.get('low', self.random_lower - 1) + 1, reroll_directives.get('high', self.random_upper + 1))
+        reroll_directives = self.directives["reroll"]
+        reroll_range = range(
+            reroll_directives.get("low", self.random_lower - 1) + 1,
+            reroll_directives.get("high", self.random_upper + 1),
+        )
 
         final_rolls = []
         rerolled_indices = []
@@ -193,8 +214,8 @@ class DiceRollEvaluatorNode(EvaluatorNode):
         left_idx = 0
         right_idx = len(sorted_rolls)
 
-        for high_low, count in self.directives['drop'].items():
-            if high_low == 'high':
+        for high_low, count in self.directives["drop"].items():
+            if high_low == "high":
                 for roll in sorted_rolls[-count:]:
                     to_drop[roll] += 1
                 right_idx -= count
@@ -204,8 +225,8 @@ class DiceRollEvaluatorNode(EvaluatorNode):
                 left_idx += count
 
         # This really only looks at one keep value.
-        for high_low, count in self.directives['keep'].items():
-            if high_low == 'high':
+        for high_low, count in self.directives["keep"].items():
+            if high_low == "high":
                 for roll in sorted_rolls[right_idx - count : right_idx]:
                     to_keep[roll] += 1
             else:
@@ -232,8 +253,9 @@ class DiceRollEvaluatorNode(EvaluatorNode):
             to_keep=to_keep,
             to_drop=to_drop,
             original_rolls=first_rolls,
-            rerolled_indices=rerolled_indices
+            rerolled_indices=rerolled_indices,
         )
+
 
 class NumberEvaluatorNode(EvaluatorNode):
     """Handles numeric literals (integers, floats, natural numbers)."""
@@ -243,11 +265,11 @@ class NumberEvaluatorNode(EvaluatorNode):
         self.number_type = number_type  # 'integer', 'float', 'natural_num'
 
     def evaluate(self) -> NumberResultNode:
-        if self.number_type == 'float':
+        if self.number_type == "float":
             value = float(self.number_token)
-        elif self.number_type == 'integer':
+        elif self.number_type == "integer":
             value = int(self.number_token)
-        elif self.number_type == 'natural_num':
+        elif self.number_type == "natural_num":
             value = int(self.number_token)
             if value <= 0:
                 raise ValueError(f"Natural number must be positive, got {value}")

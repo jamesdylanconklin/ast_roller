@@ -2,13 +2,14 @@
 Grammar definition for AST parsing using Lark.
 """
 
-from lark import Transformer, Lark, v_args
+from lark import Lark, Transformer, v_args
+
 from .evaluators import (
-    ListEvaluatorNode,
     BinaryOpEvaluatorNode,
     DiceRollEvaluatorNode,
+    ListEvaluatorNode,
     NumberEvaluatorNode,
-    SequenceEvaluatorNode
+    SequenceEvaluatorNode,
 )
 
 # Lark grammar definition
@@ -48,6 +49,7 @@ SEQUENCE_SEP: /,\s*/
 
 ### TRANSFORMER
 
+
 @v_args(inline=True)
 class CalculateTree(Transformer):
     """
@@ -64,7 +66,7 @@ class CalculateTree(Transformer):
     def sequence_expression(self, *expressions):
         """Transform sequence expression - comma-separated expressions."""
         # Ignore the separator tokens.
-        expr_nodes = [expression for expression in expressions if hasattr(expression, 'evaluate')]
+        expr_nodes = [expression for expression in expressions if hasattr(expression, "evaluate")]
 
         return SequenceEvaluatorNode(expr_nodes)
 
@@ -91,14 +93,14 @@ class CalculateTree(Transformer):
         return DiceRollEvaluatorNode(dice_token, directives.children)
 
     def float(self, token):
-        return NumberEvaluatorNode(token, 'float')
+        return NumberEvaluatorNode(token, "float")
 
     def integer(self, token):
-        return NumberEvaluatorNode(token, 'integer')
+        return NumberEvaluatorNode(token, "integer")
 
     def natural_num(self, token):
-        return NumberEvaluatorNode(token, 'natural_num')
+        return NumberEvaluatorNode(token, "natural_num")
 
 
-parser = Lark(GRAMMAR, parser='earley')
+parser = Lark(GRAMMAR, parser="earley")
 transformer = CalculateTree()

@@ -8,28 +8,27 @@ The cases vary:
 """
 
 from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass(frozen=True)
 class LoggingCase:
     name: str
-    log_boolean: Optional[bool]
-    log_file: Optional[str]
-    description: Optional[str]
+    log_boolean: bool | None
+    log_file: str | None
+    description: str | None
     roll_string: str
-    reason: Optional[str] = None
+    reason: str | None = None
 
 
 ERROR_LOGGING_CASES = [
     LoggingCase(
-      name="nonexistent_log_parent_directory",
-      log_boolean=True,
-      log_file="logs/combat.log",
-      description="damage",
-      roll_string="2d6+3",
-      reason="Specified log file directory logs does not exist."
-    ),    
+        name="nonexistent_log_parent_directory",
+        log_boolean=True,
+        log_file="logs/combat.log",
+        description="damage",
+        roll_string="2d6+3",
+        reason="Specified log file directory logs does not exist.",
+    ),
 ]
 
 LOGGING_CASES = [
@@ -61,7 +60,7 @@ LOGGING_CASES = [
         description=None,
         roll_string="3d8",
     ),
-        LoggingCase(
+    LoggingCase(
         name="logging_enabled_no_file_with_description",
         log_boolean=True,
         log_file=None,
